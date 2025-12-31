@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-speedometer2"></i> Dashboard</h1>
+    <button class="btn btn-primary" onclick="location.reload()">
+        <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+</div>
+
+<div class="row g-4">
+    <!-- Total Users -->
+    <div class="col-md-3">
+        <div class="card stat-card border-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Total Users</h6>
+                        <h3 id="total-users">{{ stats.total_users }}</h3>
+                    </div>
+                    <i class="bi bi-people fs-1 text-primary"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Users -->
+    <div class="col-md-3">
+        <div class="card stat-card border-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Active Users</h6>
+                        <h3 id="active-users">{{ stats.active_users }}</h3>
+                    </div>
+                    <i class="bi bi-person-check fs-1 text-success"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Videos -->
+    <div class="col-md-3">
+        <div class="card stat-card border-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Total Videos</h6>
+                        <h3 id="total-videos">{{ stats.total_videos }}</h3>
+                    </div>
+                    <i class="bi bi-film fs-1 text-info"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Videos -->
+    <div class="col-md-3">
+        <div class="card stat-card border-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted">Completed</h6>
+                        <h3 id="completed-videos">{{ stats.completed_videos }}</h3>
+                    </div>
+                    <i class="bi bi-check-circle fs-1 text-warning"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <!-- Pending Videos -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Pending Videos</h6>
+                <h4>{{ stats.pending_videos }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processing Videos -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Processing</h6>
+                <h4>{{ stats.processing_videos }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Failed Videos -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Failed Videos</h6>
+                <h4 class="text-danger">{{ stats.failed_videos }}</h4>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Deposits -->
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="text-muted">Pending Deposits</h6>
+                <h4>{{ stats.pending_deposits }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-2">
+    <!-- Total Deposits -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5><i class="bi bi-cash-coin"></i> Total Deposits</h5>
+                <h2 class="text-success">${{ "%.2f"|format(stats.total_deposits) }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Withdrawals -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <h5><i class="bi bi-currency-dollar"></i> Total Withdrawals</h5>
+                <h2 class="text-danger">${{ "%.2f"|format(stats.total_withdrawals) }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
