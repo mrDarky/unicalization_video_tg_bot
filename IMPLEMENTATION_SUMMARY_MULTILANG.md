@@ -10,7 +10,7 @@ Successfully implemented multi-language support for the Telegram bot with Englis
   - Type: String
   - Nullable: False
   - Default: "en"
-- **Created migration script** (`migrate_language.py`) for existing databases
+- **Automatic migration** built into `init_db()` for existing databases
 - **Added CRUD function** `update_user_language()` to change user's language preference
 
 ### 2. Translation System
@@ -73,18 +73,19 @@ Successfully implemented multi-language support for the Telegram bot with Englis
 ### Created (6 files):
 1. `locales/__init__.py` - Package initialization
 2. `locales/translations.py` - Translation dictionary and helper function
-3. `migrate_language.py` - Database migration script
+3. `migrate_language.py` - Database migration script (deprecated - migration is now automatic)
 4. `MULTILANG.md` - Documentation for multi-language system
 5. `test_multilang.py` - Test suite
 6. `demo_multilang.py` - Demonstration script
 
-### Modified (6 files):
+### Modified (7 files):
 1. `database/models.py` - Added language field to User model
-2. `database/crud.py` - Added update_user_language() function
-3. `bot/states.py` - Added LanguageSelectionStates
-4. `bot/keyboards/__init__.py` - Updated to support translations
-5. `bot/handlers/basic.py` - Updated all handlers to use translations
-6. `README.md` - Added multi-language feature mention
+2. `database/database.py` - Added automatic migration logic to init_db()
+3. `database/crud.py` - Added update_user_language() function
+4. `bot/states.py` - Added LanguageSelectionStates
+5. `bot/keyboards/__init__.py` - Updated to support translations
+6. `bot/handlers/basic.py` - Updated all handlers to use translations
+7. `README.md` - Added multi-language feature mention
 
 ## Testing
 
@@ -152,7 +153,7 @@ The following areas can be enhanced with translations in future updates:
 - "Unicalize" is intentional branding/terminology (making videos unique)
 - Language preference stored per user in database
 - Default language is English for new users
-- Migration script provided for existing databases
+- **Automatic migration** - existing databases are automatically upgraded on first run
 - Easy to extend with more languages
 - Minimal changes to existing codebase
 - No breaking changes to existing functionality

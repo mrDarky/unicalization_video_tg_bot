@@ -50,15 +50,13 @@ Users can change their language at any time by clicking the "🌍 Language" butt
 
 ## Database Migration
 
-If you have an existing database, run the migration script to add the language column:
+**Migration is automatic!** When you update to the latest version with multi-language support:
 
-```bash
-python migrate_language.py
-```
+- The `language` column is automatically added to existing databases on first run
+- Existing users are automatically set to English ('en') as the default language
+- No manual migration steps are required
 
-This will:
-- Add the `language` column to the `users` table
-- Set default language to English for existing users
+The migration happens automatically during database initialization in `init_db()`.
 
 ## Files Modified
 
