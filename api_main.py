@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,8 +13,18 @@ from database.database import init_db, get_session
 from database.models import User, Video, Deposit, Withdrawal, Setting
 from api.routes import users, videos, deposits, withdrawals, settings as settings_route, statistics
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan event handler for startup and shutdown"""
+    # Startup: Initialize database
+    await init_db()
+    yield
+    # Shutdown: Add cleanup code here if needed
+
+
 # Create FastAPI app
-app = FastAPI(title="Video Bot Admin Panel", version="1.0.0")
+app = FastAPI(title="Video Bot Admin Panel", version="1.0.0", lifespan=lifespan)
 
 # Mount static files only if the directory exists
 if os.path.exists("static"):
@@ -29,12 +40,6 @@ app.include_router(deposits.router, prefix="/api")
 app.include_router(withdrawals.router, prefix="/api")
 app.include_router(settings_route.router, prefix="/api")
 app.include_router(statistics.router, prefix="/api")
-
-
-@app.on_event("startup")
-async def startup():
-    """Initialize database on startup"""
-    await init_db()
 
 
 @app.get("/", response_class=RedirectResponse)
