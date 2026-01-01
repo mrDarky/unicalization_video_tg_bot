@@ -18,7 +18,8 @@ Cross-platform GUI application with:
 - **File browser** - Easy video selection
 
 ### Telegram Bot
-- **Mode 1: Single Video Processing**
+- **Mode 1: Single Video Processing with Batch Support** ⭐ NEW
+  - Configure modifications once, apply to multiple videos
   - Change playback speed
   - Scale/resize video
   - Apply filters (hue, brightness, contrast, saturation, blur, sharpen, grayscale, sepia, negative, noise)
@@ -27,12 +28,26 @@ Cross-platform GUI application with:
   - Add text overlay
   - Trim/cut video
 
-- **Mode 2: Two Video Processing**
-  - Process two videos separately
+- **Mode 2: Two Video Groups Processing** ⭐ ENHANCED
+  - Configure separate modifications for two video groups
+  - Upload multiple videos per group
+  - Advanced combining strategies:
+    - First-with-First (1:1 pairing)
+    - All-with-All (cartesian product)
+    - Sequential (concatenate all)
   - Merge videos in different layouts:
     - Horizontal (side by side)
     - Vertical (top to bottom)
     - Sequential (one after another)
+
+- **Mode N: Multiple Video Groups Processing** ⭐ NEW
+  - Process 3, 4, or 5 video groups
+  - Each group with its own modifications
+  - Multiple videos per group
+  - Flexible combining strategies
+  - Perfect for complex video montages and comparisons
+
+📖 **[See Enhanced Modes User Guide](ENHANCED_MODES_GUIDE.md)** for detailed workflows and examples
 
 - **User Features**
   - User statistics
