@@ -1,6 +1,11 @@
 from aiogram.fsm.state import State, StatesGroup
 
 
+class LanguageSelectionStates(StatesGroup):
+    """States for language selection"""
+    selecting_language = State()
+
+
 class VideoProcessingStates(StatesGroup):
     """States for video processing"""
     # Mode 1: Single video

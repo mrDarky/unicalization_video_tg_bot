@@ -1,12 +1,26 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from locales import get_text
 
 
-def main_menu_keyboard() -> ReplyKeyboardMarkup:
+def language_selection_keyboard() -> InlineKeyboardMarkup:
+    """Language selection keyboard"""
+    keyboard = [
+        [InlineKeyboardButton(text="🇬🇧 English", callback_data="lang_en")],
+        [InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang_ru")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
+def main_menu_keyboard(language: str = "en") -> ReplyKeyboardMarkup:
     """Main menu keyboard"""
     keyboard = [
-        [KeyboardButton(text="🎬 Process 1 Video"), KeyboardButton(text="🎥 Process 2 Videos")],
-        [KeyboardButton(text="📊 My Statistics"), KeyboardButton(text="💰 Balance")],
-        [KeyboardButton(text="👥 Referrals"), KeyboardButton(text="ℹ️ Help")]
+        [KeyboardButton(text=get_text(language, "btn_process_1_video")), 
+         KeyboardButton(text=get_text(language, "btn_process_2_videos"))],
+        [KeyboardButton(text=get_text(language, "btn_statistics")), 
+         KeyboardButton(text=get_text(language, "btn_balance"))],
+        [KeyboardButton(text=get_text(language, "btn_referrals")), 
+         KeyboardButton(text=get_text(language, "btn_help"))],
+        [KeyboardButton(text=get_text(language, "btn_language"))]
     ]
     return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
 
