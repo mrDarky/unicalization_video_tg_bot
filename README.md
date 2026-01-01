@@ -1,8 +1,21 @@
-# Video Unicalization Telegram Bot
+# Video Unicalization - Bot & Desktop Application
 
-A powerful Telegram bot for video processing and unicalization (making videos unique) with an admin panel for management.
+A powerful video processing and unicalization tool that runs as:
+- **Telegram Bot** - Remote video processing via Telegram
+- **Desktop Application** - Standalone GUI app for Windows, macOS, and Linux
+- **Admin Panel** - Web-based management interface
 
 ## Features
+
+### Desktop Application (NEW! 🎉)
+Cross-platform GUI application with:
+- **Standalone executable** - No Python installation required
+- **All dependencies included** - Ready to run out of the box
+- **User-friendly interface** - Built with Kivy framework
+- **Single Video Processing** - Apply modifications to one video
+- **Two Video Merging** - Combine videos in different layouts
+- **Real-time progress** - Visual feedback during processing
+- **File browser** - Easy video selection
 
 ### Telegram Bot
 - **Mode 1: Single Video Processing**
@@ -40,15 +53,46 @@ Modern Bootstrap 5-based admin interface with:
 ## Technology Stack
 
 - **Python 3.9+**
+- **Kivy 2.3** - Cross-platform UI framework
 - **aiogram 3.3** - Telegram Bot framework
 - **FastAPI** - Admin panel backend
 - **SQLite** - Database with async support (aiosqlite)
 - **SQLAlchemy 2.0** - ORM
 - **FFmpeg** - Video processing
+- **PyInstaller** - Application packaging
 - **Bootstrap 5** - Frontend UI
 - **Jinja2** - Template engine
 
-## Installation
+## Quick Start
+
+### Desktop Application (Recommended for End Users)
+
+The easiest way to use the video processing features without any setup:
+
+1. **Download** the pre-built executable for your platform:
+   - Windows: `VideoUnicalization.exe`
+   - macOS: `VideoUnicalization.app`
+   - Linux: `VideoUnicalization-x86_64.AppImage`
+
+2. **Install FFmpeg** (one-time setup):
+   - Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html)
+   - macOS: `brew install ffmpeg`
+   - Linux: `sudo apt-get install ffmpeg` (Ubuntu/Debian)
+
+3. **Run the application**:
+   ```bash
+   # Windows: Double-click VideoUnicalization.exe
+   # macOS: Double-click VideoUnicalization.app
+   # Linux:
+   chmod +x VideoUnicalization-x86_64.AppImage
+   ./VideoUnicalization-x86_64.AppImage --mode desktop
+   ```
+
+4. **Start processing videos!** 🎬
+
+See [BUILD.md](BUILD.md) for building from source.
+
+## Installation (For Developers)
 
 ### Prerequisites
 - Python 3.9 or higher
@@ -105,11 +149,28 @@ SECRET_KEY=your_secret_key_here
 ```
 
 6. Start the services:
+
+**Option 1: Desktop Mode (GUI Application)**
+```bash
+python main.py --mode desktop
+```
+
+**Option 2: Bot Mode (Telegram Bot)**
+```bash
+python main.py --mode bot
+```
+
+**Option 3: API Mode (Admin Panel)**
+```bash
+python main.py --mode api
+```
+
+**Option 4: Use the startup script (runs both bot and API)**
 ```bash
 ./start.sh
 ```
 
-Or start manually:
+Or start services manually:
 ```bash
 # Terminal 1 - Start API server
 python api_main.py
@@ -119,6 +180,31 @@ python bot_main.py
 ```
 
 ## Usage
+
+### Desktop Application
+
+1. Launch the application:
+   ```bash
+   python main.py --mode desktop
+   # Or use the standalone executable
+   ```
+
+2. Select processing mode:
+   - **Single Video** - Process one video with modifications
+   - **Merge Two Videos** - Combine two videos
+
+3. Choose your video file(s) using the file browser
+
+4. Select modifications:
+   - Speed: 0.5x to 2.0x
+   - Scale: Various resolutions
+   - Filters: Hue, brightness, contrast, blur, etc.
+   - Rotation: 90°, 180°, 270°
+   - Text overlay: Add custom text
+
+5. Click "Process Video" and wait for completion
+
+6. Find your processed video in the output directory!
 
 ### Telegram Bot
 1. Start the bot: `/start`
@@ -163,12 +249,43 @@ unicalization_video_tg_bot/
 │   └── video_processing.py    # Video processing functions
 ├── static/                    # Static files (CSS, JS)
 ├── config.py                  # Configuration
+├── main.py                    # Main launcher (NEW!)
+├── desktop_app.py             # Desktop GUI (NEW!)
 ├── bot_main.py                # Bot entry point
 ├── api_main.py                # API entry point
 ├── start.sh                   # Startup script
 ├── requirements.txt           # Python dependencies
+├── VideoUnicalization.spec    # PyInstaller spec (NEW!)
+├── build_windows.bat          # Windows build script (NEW!)
+├── build_macos.sh             # macOS build script (NEW!)
+├── build_linux.sh             # Linux build script (NEW!)
+├── BUILD.md                   # Build documentation (NEW!)
 └── README.md                  # This file
 ```
+
+## Building Standalone Applications
+
+To create standalone executables that include all dependencies:
+
+### Windows
+```cmd
+build_windows.bat
+```
+Creates: `dist\VideoUnicalization\VideoUnicalization.exe`
+
+### macOS
+```bash
+./build_macos.sh
+```
+Creates: `dist/VideoUnicalization.app`
+
+### Linux
+```bash
+./build_linux.sh
+```
+Creates: `VideoUnicalization-x86_64.AppImage`
+
+**See [BUILD.md](BUILD.md) for detailed build instructions and distribution guide.**
 
 ## API Documentation
 
