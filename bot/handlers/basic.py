@@ -4,7 +4,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from bot.keyboards import main_menu_keyboard, mode_selection_keyboard, language_selection_keyboard
 from database.database import async_session_maker
-from database.crud import get_or_create_user, get_user_videos, get_statistics, update_user_language
+from database.crud import get_or_create_user, get_user_videos, get_statistics, update_user_language, get_user_by_telegram_id
 from config import settings
 from locales import get_text
 from bot.states import LanguageSelectionStates
@@ -18,6 +18,9 @@ async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
     
     async with async_session_maker() as session:
+        user_before = await get_user_by_telegram_id(session, message.from_user.id)
+        is_new_user = user_before is None
+        
         user = await get_or_create_user(
             session,
             telegram_id=message.from_user.id,
@@ -26,8 +29,8 @@ async def cmd_start(message: Message, state: FSMContext):
             last_name=message.from_user.last_name
         )
     
-    # If user doesn't have language set or it's first time, show language selection
-    if not hasattr(user, 'language') or user.language is None or user.language == "en":
+    # Show language selection only for new users
+    if is_new_user:
         await state.set_state(LanguageSelectionStates.selecting_language)
         await message.answer(
             get_text("en", "select_language"),
