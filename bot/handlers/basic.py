@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
-from bot.keyboards import main_menu_keyboard, mode_selection_keyboard, language_selection_keyboard
+from bot.keyboards import main_menu_keyboard, mode_selection_keyboard, language_selection_keyboard, video_modifications_keyboard, num_groups_keyboard
 from database.database import async_session_maker
 from database.crud import get_or_create_user, get_user_videos, get_statistics, update_user_language, get_user_by_telegram_id, get_user_referrals_count
 from config import settings
