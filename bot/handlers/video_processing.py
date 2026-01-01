@@ -46,24 +46,12 @@ async def process_speed_input(message: Message, state: FSMContext):
         modifications.append({'type': 'speed', 'value': speed})
         await state.update_data(modifications=modifications)
         
-        # Get current state name to determine which mode we're in
-        current_state = await state.get_state()
-        if 'mode1' in str(data.get('mode', 'mode1')):
-            await message.answer(
-                f"✅ Speed set to {speed}x\n\n"
-                "Select more modifications or click Done:",
-                reply_markup=video_modifications_keyboard()
-            )
-            await state.set_state(VideoProcessingStates.selecting_modifications_mode1)
-        else:
-            # For mode 2 or mode n
-            current_group = data.get('current_group', 1)
-            await message.answer(
-                f"✅ Speed set to {speed}x for Group {current_group}\n\n"
-                "Select more modifications or click Done:",
-                reply_markup=video_modifications_keyboard()
-            )
-            await state.set_state(VideoProcessingStates.selecting_modifications_group)
+        await message.answer(
+            f"✅ Speed set to {speed}x\n\n"
+            "Select more modifications or click Done:",
+            reply_markup=video_modifications_keyboard()
+        )
+        await state.set_state(VideoProcessingStates.selecting_modifications_mode1)
     except ValueError:
         await message.answer("❌ Invalid input. Please enter a number.")
 
@@ -283,13 +271,15 @@ async def handle_videos_mode1(message: Message, state: FSMContext):
         video_paths.append(video_path)
         video_ids.append(db_video.id)
         
+        video_count = len(video_paths)  # Get count after appending
+        
         await state.update_data(
             video_paths=video_paths,
             video_ids=video_ids
         )
     
     await message.answer(
-        f"✅ Video {len(video_paths)} received!\n\n"
+        f"✅ Video {video_count} received!\n\n"
         "Send more videos or click 'Done' to start processing."
     )
 

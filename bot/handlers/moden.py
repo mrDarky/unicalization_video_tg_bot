@@ -395,7 +395,7 @@ async def handle_merge_layout_moden(callback: CallbackQuery, state: FSMContext):
             group_lists = [all_processed.get(f'group_{i}', []) for i in range(1, num_groups + 1)]
             combinations = list(itertools.product(*group_lists))
             
-            for combo_idx, combo in enumerate(combinations[:100]):  # Limit to 100 combinations
+            for combo_idx, combo in enumerate(combinations[:settings.MAX_CARTESIAN_COMBINATIONS]):
                 final_filename = generate_filename()
                 final_path = os.path.join(settings.PROCESSED_VIDEO_DIR, final_filename)
                 
