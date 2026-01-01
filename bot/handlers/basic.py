@@ -4,7 +4,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from bot.keyboards import main_menu_keyboard, mode_selection_keyboard, language_selection_keyboard
 from database.database import async_session_maker
-from database.crud import get_or_create_user, get_user_videos, get_statistics, update_user_language, get_user_by_telegram_id
+from database.crud import get_or_create_user, get_user_videos, get_statistics, update_user_language, get_user_by_telegram_id, get_user_with_referrals
 from config import settings
 from locales import get_text
 from bot.states import LanguageSelectionStates
@@ -140,21 +140,31 @@ async def show_balance(message: Message):
 async def show_referrals(message: Message):
     """Show referral information"""
     async with async_session_maker() as session:
-        user = await get_or_create_user(
-            session,
-            telegram_id=message.from_user.id,
-            username=message.from_user.username
-        )
+        user = await get_user_with_referrals(session, message.from_user.id)
+        if not user:
+            # Create user if doesn't exist
+            user = await get_or_create_user(
+                session,
+                telegram_id=message.from_user.id,
+                username=message.from_user.username
+            )
+            # Refresh to get empty referrals list
+            await session.refresh(user, ['referrals'])
+        
+        # Access referrals within the session context
+        total_referrals = len(user.referrals)
+        language = user.language
+        telegram_id = user.telegram_id
     
     # Get bot username for referral link
     bot_username = (await message.bot.me()).username
-    referral_link = f"https://t.me/{bot_username}?start=ref_{user.telegram_id}"
+    referral_link = f"https://t.me/{bot_username}?start=ref_{telegram_id}"
     
     referral_text = get_text(
-        user.language,
+        language,
         "referral_text",
         referral_link=referral_link,
-        total_referrals=len(user.referrals) if hasattr(user, 'referrals') else 0
+        total_referrals=total_referrals
     )
     
     await message.answer(referral_text, parse_mode="HTML")
