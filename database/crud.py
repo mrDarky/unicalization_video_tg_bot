@@ -1,6 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, func
-from sqlalchemy.orm import selectinload
 from database.models import User, Video, Deposit, Withdrawal, Setting, Statistic
 from datetime import datetime
 from typing import Optional, List
@@ -35,16 +34,6 @@ async def get_or_create_user(session: AsyncSession, telegram_id: int, username: 
     if not user:
         user = await create_user(session, telegram_id, username, first_name, last_name)
     return user
-
-
-async def get_user_with_referrals(session: AsyncSession, telegram_id: int) -> Optional[User]:
-    """Get user by telegram ID with referrals eagerly loaded"""
-    result = await session.execute(
-        select(User)
-        .where(User.telegram_id == telegram_id)
-        .options(selectinload(User.referrals))
-    )
-    return result.scalar_one_or_none()
 
 
 async def get_user_referrals_count(session: AsyncSession, user_id: int) -> int:
