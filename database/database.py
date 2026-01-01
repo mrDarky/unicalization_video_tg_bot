@@ -1,9 +1,12 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import text
 from database.models import Base
 from config import settings
 import os
+import logging
 
+logger = logging.getLogger(__name__)
 
 # Create async engine
 engine = create_async_engine(
@@ -28,6 +31,34 @@ async def init_db():
     
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        
+        # Migration: Add language column to users table if it doesn't exist
+        # This handles existing databases that were created before the language feature
+        # Note: This migration is SQLite-specific. For other databases, the column
+        # should be added using the appropriate migration tool (e.g., Alembic).
+        if settings.DATABASE_URL.startswith('sqlite+aiosqlite:'):
+            try:
+                result = await conn.execute(text(
+                    "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='language'"
+                ))
+                column_exists = result.scalar() > 0
+                
+                if not column_exists:
+                    logger.info("Adding 'language' column to users table...")
+                    # ALTER TABLE with DEFAULT in SQLite automatically populates existing rows
+                    # VARCHAR without length matches SQLAlchemy's String type definition
+                    await conn.execute(text(
+                        "ALTER TABLE users ADD COLUMN language VARCHAR DEFAULT 'en' NOT NULL"
+                    ))
+                    logger.info("✅ Language column added successfully!")
+                else:
+                    logger.debug("Language column already exists in users table")
+            except Exception as e:
+                logger.error(
+                    f"Failed to check/add language column: {e}. "
+                    "If using a non-SQLite database, please use Alembic or another "
+                    "migration tool to add the 'language' column to the 'users' table."
+                )
 
 
 async def get_session() -> AsyncSession:

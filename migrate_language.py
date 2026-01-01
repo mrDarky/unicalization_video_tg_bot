@@ -1,4 +1,13 @@
 """
+DEPRECATED: This script is no longer needed!
+
+Migration is now automatic. The language column is automatically added
+to existing databases when you run the bot or API server.
+
+This script is kept for reference only.
+
+---
+
 Migration script to add language column to existing users table.
 Run this script if you have an existing database.
 """
