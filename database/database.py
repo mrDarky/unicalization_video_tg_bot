@@ -36,7 +36,7 @@ async def init_db():
         # This handles existing databases that were created before the language feature
         # Note: This migration is SQLite-specific. For other databases, the column
         # should be added using the appropriate migration tool (e.g., Alembic).
-        if settings.DATABASE_URL.startswith(('sqlite:', 'sqlite+')):
+        if settings.DATABASE_URL.startswith('sqlite+aiosqlite:'):
             try:
                 result = await conn.execute(text(
                     "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='language'"
@@ -46,6 +46,7 @@ async def init_db():
                 if not column_exists:
                     logger.info("Adding 'language' column to users table...")
                     # ALTER TABLE with DEFAULT in SQLite automatically populates existing rows
+                    # VARCHAR without length matches SQLAlchemy's String type definition
                     await conn.execute(text(
                         "ALTER TABLE users ADD COLUMN language VARCHAR DEFAULT 'en' NOT NULL"
                     ))
@@ -53,7 +54,11 @@ async def init_db():
                 else:
                     logger.debug("Language column already exists in users table")
             except Exception as e:
-                logger.warning(f"Could not check/add language column: {e}")
+                logger.error(
+                    f"Failed to check/add language column: {e}. "
+                    "If using a non-SQLite database, please use Alembic or another "
+                    "migration tool to add the 'language' column to the 'users' table."
+                )
 
 
 async def get_session() -> AsyncSession:
