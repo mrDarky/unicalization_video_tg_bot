@@ -322,7 +322,7 @@ Key configuration options in `.env`:
 | `ADMIN_USERNAME` | Admin panel username | admin |
 | `ADMIN_PASSWORD` | Admin panel password | admin123 |
 | `MAX_VIDEO_SIZE_MB` | Max video size | 100 |
-| `DATABASE_URL` | Database connection string | sqlite:///./bot_database.db |
+| `DATABASE_URL` | Database connection string | sqlite+aiosqlite:///./bot_database.db |
 
 ## Troubleshooting
 
