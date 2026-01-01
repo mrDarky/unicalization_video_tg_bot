@@ -46,21 +46,19 @@ async def init_db():
                     "ALTER TABLE users ADD COLUMN language VARCHAR DEFAULT 'en' NOT NULL"
                 ))
                 logger.info("✅ Language column added successfully!")
+                
+                # Update any NULL values to 'en' (for safety after migration)
+                # This only runs when the column is first added
+                async with async_session_maker() as session:
+                    await session.execute(text(
+                        "UPDATE users SET language = 'en' WHERE language IS NULL"
+                    ))
+                    await session.commit()
+                    logger.debug("Set default language for existing users")
             else:
                 logger.debug("Language column already exists in users table")
         except Exception as e:
             logger.warning(f"Could not check/add language column (may not be SQLite): {e}")
-    
-    # Update any NULL values to 'en' (for safety)
-    try:
-        async with async_session_maker() as session:
-            await session.execute(text(
-                "UPDATE users SET language = 'en' WHERE language IS NULL OR language = ''"
-            ))
-            await session.commit()
-            logger.debug("Ensured all users have language preference set")
-    except Exception as e:
-        logger.warning(f"Could not update NULL language values: {e}")
 
 
 async def get_session() -> AsyncSession:
