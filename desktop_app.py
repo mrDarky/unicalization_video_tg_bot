@@ -5,6 +5,7 @@ Multiplatform video processing desktop application
 
 import os
 import asyncio
+import shutil
 from threading import Thread
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
@@ -44,6 +45,7 @@ class VideoProcessorApp(App):
         self.selected_video2 = None
         self.processing_mode = "single"
         self.modifications = []
+        self.option_spinners = []  # Keep track of option spinners
         
     def build(self):
         self.title = "Video Unicalization - Desktop App"
@@ -171,19 +173,32 @@ class VideoProcessorApp(App):
         
         return main_layout
     
+    def _get_default_spinner_value(self, values):
+        """Get default value for spinner based on available values"""
+        if 'Original' in values:
+            return 'Original'
+        elif 'None' in values:
+            return 'None'
+        elif '1.0x' in values:
+            return '1.0x'
+        elif '0°' in values:
+            return '0°'
+        else:
+            return values[0]
+    
     def add_option_row(self, label_text, values, option_type):
         """Add a row with label and spinner for options"""
         layout = BoxLayout(size_hint_y=None, height=40, spacing=10)
         layout.add_widget(Label(text=label_text, size_hint=(0.3, 1)))
         spinner = Spinner(
-            text=values[0] if 'Original' not in values and 'None' not in values and '1.0x' not in values else 
-                 ('Original' if 'Original' in values else ('None' if 'None' in values else '1.0x')),
+            text=self._get_default_spinner_value(values),
             values=values,
             size_hint=(0.7, 1)
         )
         spinner.option_type = option_type
         layout.add_widget(spinner)
         self.options_layout.add_widget(layout)
+        self.option_spinners.append(spinner)  # Track spinner
         return spinner
     
     def on_mode_change(self, spinner, text):
@@ -338,13 +353,8 @@ class VideoProcessorApp(App):
             # Update progress
             Clock.schedule_once(lambda dt: setattr(self.progress_bar, 'value', 10), 0)
             
-            # Get spinners from options layout
-            spinners = []
-            for child in self.options_layout.children:
-                if isinstance(child, BoxLayout):
-                    for widget in child.children:
-                        if isinstance(widget, Spinner) and hasattr(widget, 'option_type'):
-                            spinners.append(widget)
+            # Use tracked spinners instead of searching for them
+            spinners = self.option_spinners
             
             progress_step = 80 / max(len(spinners) + 1, 1)
             current_progress = 10
@@ -396,10 +406,8 @@ class VideoProcessorApp(App):
             final_output = os.path.join(settings.PROCESSED_VIDEO_DIR, generate_filename())
             if current_path == input_path:
                 # No modifications, just copy
-                import shutil
                 shutil.copy(input_path, final_output)
             else:
-                import shutil
                 shutil.move(current_path, final_output)
             
             # Clean up temp files

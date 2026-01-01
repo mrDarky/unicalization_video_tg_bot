@@ -55,6 +55,6 @@ echo   3. Ensure FFmpeg is available in your PATH
 echo   4. Run VideoUnicalization.exe --mode desktop
 echo.
 echo Deactivating virtual environment...
-call build_env\Scripts\deactivate.bat
+call build_env\Scripts\deactivate
 
 pause

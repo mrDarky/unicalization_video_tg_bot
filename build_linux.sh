@@ -78,23 +78,8 @@ EOF
 
 chmod +x "$APP_DIR/AppRun"
 
-# Create a simple icon (placeholder)
-cat > "$APP_DIR/videounicalization.desktop" << EOF
-[Desktop Entry]
-Type=Application
-Name=Video Unicalization
-Comment=Video processing and unicalization tool
-Exec=VideoUnicalization
-Icon=videounicalization
-Categories=AudioVideo;Video;
-Terminal=false
-EOF
-
-# Create a placeholder icon
-cat > "$APP_DIR/.DirIcon" << EOF
-# Placeholder icon
-# Replace with actual icon file
-EOF
+# Create a placeholder icon file (symlink to the desktop file for AppImage compatibility)
+ln -sf "$APP_DIR/usr/share/applications/videounicalization.desktop" "$APP_DIR/.DirIcon"
 
 echo "[7/7] Creating AppImage..."
 if command -v appimagetool &> /dev/null; then
