@@ -287,7 +287,7 @@ async def handle_videos_mode1(message: Message, state: FSMContext):
 @router.callback_query(VideoProcessingStates.waiting_for_videos_mode1, F.data == "videos_done")
 async def process_all_videos_mode1(callback: CallbackQuery, state: FSMContext):
     """Process all uploaded videos with the configured modifications"""
-    await callback.message.edit_text("⏳ Processing your videos... Please wait.")
+    await callback.message.edit_text("⏳ Checking limits... Please wait.")
     await callback.answer()
     
     data = await state.get_data()
@@ -302,6 +302,30 @@ async def process_all_videos_mode1(callback: CallbackQuery, state: FSMContext):
         )
         await state.clear()
         return
+    
+    # Check video limits
+    async with async_session_maker() as session:
+        from database.crud import check_user_can_process_videos, get_or_create_user
+        user = await get_or_create_user(
+            session,
+            telegram_id=callback.from_user.id,
+            username=callback.from_user.username
+        )
+        
+        can_process, error_message = await check_user_can_process_videos(
+            session, user.id, len(video_paths)
+        )
+        
+        if not can_process:
+            await callback.message.answer(
+                f"❌ {error_message}\n\n"
+                "Please try again later or upgrade your plan.",
+                reply_markup=main_menu_keyboard()
+            )
+            await state.clear()
+            return
+    
+    await callback.message.edit_text("⏳ Processing your videos... Please wait.")
     
     processed_count = 0
     failed_count = 0
@@ -373,6 +397,17 @@ async def process_all_videos_mode1(callback: CallbackQuery, state: FSMContext):
             # Update database
             async with async_session_maker() as session:
                 await update_video_status(session, video_id, "failed")
+    
+    # Increment daily usage for successfully processed videos
+    if processed_count > 0:
+        async with async_session_maker() as session:
+            from database.crud import increment_daily_usage, get_or_create_user
+            user = await get_or_create_user(
+                session,
+                telegram_id=callback.from_user.id,
+                username=callback.from_user.username
+            )
+            await increment_daily_usage(session, user.id, processed_count)
     
     await callback.message.answer(
         f"🎉 Processing complete!\n\n"

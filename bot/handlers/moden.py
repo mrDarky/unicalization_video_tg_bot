@@ -318,16 +318,56 @@ async def handle_merge_layout_moden(callback: CallbackQuery, state: FSMContext):
     """Handle merge layout selection and process videos for mode N"""
     layout = callback.data.replace("merge_", "")
     
+    data = await state.get_data()
+    num_groups = data.get('num_groups', 3)
+    groups_data = data.get('groups_data', {})
+    combine_strategy = data.get('combine_strategy', 'sequential')
+    
+    # Calculate total number of output videos based on combine strategy
+    video_counts = []
+    for i in range(1, num_groups + 1):
+        group_key = f'group_{i}'
+        group_info = groups_data.get(group_key, {})
+        video_paths = group_info.get('video_paths', [])
+        video_counts.append(len(video_paths))
+    
+    if combine_strategy == 'sequential':
+        total_output_videos = 1  # All videos combined into one
+    elif combine_strategy == 'all_with_all':
+        # Calculate Cartesian product
+        from functools import reduce
+        import operator
+        total_output_videos = reduce(operator.mul, video_counts, 1)
+    else:
+        total_output_videos = min(video_counts) if video_counts else 0
+    
+    # Check video limits
+    async with async_session_maker() as session:
+        from database.crud import check_user_can_process_videos, get_or_create_user
+        user = await get_or_create_user(
+            session,
+            telegram_id=callback.from_user.id,
+            username=callback.from_user.username
+        )
+        
+        can_process, error_message = await check_user_can_process_videos(
+            session, user.id, total_output_videos
+        )
+        
+        if not can_process:
+            await callback.message.edit_text(
+                f"❌ {error_message}\n\n"
+                "Please try again later or upgrade your plan.",
+                reply_markup=main_menu_keyboard()
+            )
+            await state.clear()
+            return
+    
     await callback.message.edit_text(
         "⏳ Processing and combining your videos... Please wait.\n\n"
         "This may take several minutes."
     )
     await callback.answer()
-    
-    data = await state.get_data()
-    num_groups = data.get('num_groups', 3)
-    groups_data = data.get('groups_data', {})
-    combine_strategy = data.get('combine_strategy', 'sequential')
     
     try:
         # First, apply modifications to all videos in all groups
@@ -492,6 +532,16 @@ async def handle_merge_layout_moden(callback: CallbackQuery, state: FSMContext):
             for path in group_info.get('video_paths', []):
                 if os.path.exists(path):
                     os.remove(path)
+        
+        # Increment daily usage for successfully processed videos
+        async with async_session_maker() as session:
+            from database.crud import increment_daily_usage, get_or_create_user
+            user = await get_or_create_user(
+                session,
+                telegram_id=callback.from_user.id,
+                username=callback.from_user.username
+            )
+            await increment_daily_usage(session, user.id, combined_count)
         
         await callback.message.answer(
             f"🎉 Processing complete!\n\n"
