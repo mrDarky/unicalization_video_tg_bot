@@ -25,6 +25,7 @@ venv/
 env/
 ENV/
 .venv
+build_env/
 
 # Environment Variables
 .env
@@ -62,3 +63,12 @@ htmlcov/
 # Temporary files
 *.tmp
 *.bak
+
+# Build artifacts
+*.spec.backup
+*.AppDir/
+*.AppImage
+*.dmg
+*.exe
+*.app
+build_env/
