@@ -5,6 +5,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 import uvicorn
+import os
 
 from config import settings
 from database.database import init_db, get_session
@@ -14,8 +15,9 @@ from api.routes import users, videos, deposits, withdrawals, settings as setting
 # Create FastAPI app
 app = FastAPI(title="Video Bot Admin Panel", version="1.0.0")
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Mount static files only if the directory exists
+if os.path.exists("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Templates
 templates = Jinja2Templates(directory="api/templates")
