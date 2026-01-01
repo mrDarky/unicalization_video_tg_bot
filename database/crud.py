@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, func
 from database.models import User, Video, Deposit, Withdrawal, Setting, Statistic, TariffPlan, DailyVideoUsage
 from datetime import datetime, date
-from typing import Optional, List
+from typing import Optional, List, Tuple
 
 
 async def get_user_by_telegram_id(session: AsyncSession, telegram_id: int) -> Optional[User]:
@@ -261,7 +261,7 @@ async def get_user_daily_usage(session: AsyncSession, user_id: int) -> int:
     return usage.video_count
 
 
-async def check_user_can_process_videos(session: AsyncSession, user_id: int, video_count: int) -> tuple[bool, str]:
+async def check_user_can_process_videos(session: AsyncSession, user_id: int, video_count: int) -> Tuple[bool, str]:
     """
     Check if user can process videos based on their tariff plan limits
     Returns (can_process, error_message)

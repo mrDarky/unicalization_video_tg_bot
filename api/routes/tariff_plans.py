@@ -104,7 +104,7 @@ async def update_plan(
     if not plan:
         raise HTTPException(status_code=404, detail="Tariff plan not found")
     
-    update_data = {k: v for k, v in plan_update.dict().items() if v is not None}
+    update_data = {k: v for k, v in plan_update.model_dump(exclude_unset=True).items() if v is not None}
     if update_data:
         await update_tariff_plan(session, plan_id, **update_data)
     
