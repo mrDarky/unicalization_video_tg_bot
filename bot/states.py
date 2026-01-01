@@ -8,17 +8,23 @@ class LanguageSelectionStates(StatesGroup):
 
 class VideoProcessingStates(StatesGroup):
     """States for video processing"""
-    # Mode 1: Single video
-    waiting_for_video_mode1 = State()
+    # Mode 1: Single video - NEW FLOW (filters first, then multiple videos)
     selecting_modifications_mode1 = State()
-    waiting_for_modification_params = State()
+    waiting_for_videos_mode1 = State()
     
-    # Mode 2: Two videos
-    waiting_for_video1_mode2 = State()
-    waiting_for_video2_mode2 = State()
+    # Mode 2: Two video groups - NEW FLOW (filters per group, then multiple videos per group)
     selecting_modifications_video1 = State()
+    waiting_for_videos_group1 = State()
     selecting_modifications_video2 = State()
+    waiting_for_videos_group2 = State()
+    selecting_merge_strategy = State()
     selecting_merge_layout = State()
+    
+    # Mode N: Multiple video groups - NEW FLOW (n groups with filters)
+    selecting_num_groups = State()
+    selecting_modifications_group = State()
+    waiting_for_videos_group = State()
+    selecting_combine_strategy = State()
     
     # Common states
     processing = State()

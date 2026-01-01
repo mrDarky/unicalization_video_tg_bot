@@ -16,6 +16,7 @@ def main_menu_keyboard(language: str = "en") -> ReplyKeyboardMarkup:
     keyboard = [
         [KeyboardButton(text=get_text(language, "btn_process_1_video")), 
          KeyboardButton(text=get_text(language, "btn_process_2_videos"))],
+        [KeyboardButton(text="🎞️ Process N Videos")],
         [KeyboardButton(text=get_text(language, "btn_statistics")), 
          KeyboardButton(text=get_text(language, "btn_balance"))],
         [KeyboardButton(text=get_text(language, "btn_referrals")), 
@@ -75,6 +76,46 @@ def merge_layout_keyboard() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="➡️ Horizontal (Side by Side)", callback_data="merge_horizontal")],
         [InlineKeyboardButton(text="⬇️ Vertical (Top to Bottom)", callback_data="merge_vertical")],
         [InlineKeyboardButton(text="▶️ Sequential (One after Another)", callback_data="merge_sequential")],
+        [InlineKeyboardButton(text="❌ Cancel", callback_data="cancel")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
+def merge_strategy_keyboard() -> InlineKeyboardMarkup:
+    """Merge strategy selection keyboard for multiple videos"""
+    keyboard = [
+        [InlineKeyboardButton(text="1️⃣ First with First (1:1 pairing)", callback_data="strategy_first_with_first")],
+        [InlineKeyboardButton(text="🔢 All with All (cartesian)", callback_data="strategy_all_with_all")],
+        [InlineKeyboardButton(text="🔄 Sequential (all from group 1, then all from group 2)", callback_data="strategy_sequential")],
+        [InlineKeyboardButton(text="❌ Cancel", callback_data="cancel")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
+def done_adding_videos_keyboard() -> InlineKeyboardMarkup:
+    """Keyboard to confirm done adding videos"""
+    keyboard = [
+        [InlineKeyboardButton(text="✅ Done - Process Videos", callback_data="videos_done")],
+        [InlineKeyboardButton(text="❌ Cancel", callback_data="cancel")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
+def num_groups_keyboard() -> InlineKeyboardMarkup:
+    """Select number of video groups for Mode N"""
+    keyboard = [
+        [InlineKeyboardButton(text="3️⃣ 3 Groups", callback_data="groups_3")],
+        [InlineKeyboardButton(text="4️⃣ 4 Groups", callback_data="groups_4")],
+        [InlineKeyboardButton(text="5️⃣ 5 Groups", callback_data="groups_5")],
+        [InlineKeyboardButton(text="❌ Cancel", callback_data="cancel")]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
+def next_group_keyboard(current_group: int, total_groups: int) -> InlineKeyboardMarkup:
+    """Keyboard to proceed to next group configuration"""
+    keyboard = [
+        [InlineKeyboardButton(text=f"➡️ Configure Group {current_group + 1}/{total_groups}", callback_data=f"next_group_{current_group + 1}")],
         [InlineKeyboardButton(text="❌ Cancel", callback_data="cancel")]
     ]
     return InlineKeyboardMarkup(inline_keyboard=keyboard)

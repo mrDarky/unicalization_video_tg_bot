@@ -5,14 +5,55 @@
 ### Overview
 A complete Telegram bot system for video processing and unicalization with a full-featured admin panel built with Python, aiogram, FastAPI, SQLite, and Bootstrap 5.
 
+### ⭐ Latest Update: Enhanced Video Processing Modes (January 2026)
+
+The video processing system has been significantly enhanced with a **filters-first workflow** and support for batch processing:
+
+#### New Workflow Model
+All modes now follow a **configure-first, upload-later** pattern:
+1. Configure modifications/filters first
+2. Upload one or more videos
+3. Process all videos with the configured settings
+
+This replaces the old workflow where you uploaded a video first, then configured modifications.
+
+#### Enhanced Modes
+
+**Mode 1: Batch Processing**
+- Configure modifications once
+- Upload multiple videos (1, 2, 5, 10, etc.)
+- All videos processed with the same settings
+- Perfect for applying consistent modifications to many videos
+
+**Mode 2: Two Video Groups with Combining**
+- Configure modifications for Group 1
+- Upload multiple videos for Group 1
+- Configure modifications for Group 2
+- Upload multiple videos for Group 2
+- Choose combining strategy:
+  - First-with-First: Pair 1st with 1st, 2nd with 2nd, etc.
+  - All-with-All: Every video from Group 1 with every video from Group 2
+  - Sequential: All Group 1 videos, then all Group 2 videos
+- Select merge layout (horizontal, vertical, sequential)
+
+**Mode N: Multiple Video Groups (NEW)**
+- Process 3, 4, or 5 video groups
+- Each group with its own modifications
+- Multiple videos per group
+- Same combining strategies as Mode 2
+- Perfect for complex video productions and comparisons
+
+See [ENHANCED_MODES_GUIDE.md](ENHANCED_MODES_GUIDE.md) for detailed usage documentation.
+
 ### Features Implemented
 
 #### 1. Telegram Bot Features
-- **Two Processing Modes:**
-  - Mode 1: Single video processing with multiple modifications
-  - Mode 2: Dual video processing with merging capabilities
+- **Three Processing Modes:**
+  - Mode 1: Batch video processing with consistent modifications
+  - Mode 2: Two video group processing with flexible combining
+  - Mode N: Multiple video group processing (3-5 groups)
 
-- **Video Modifications (Mode 1):**
+- **Video Modifications (All Modes):**
   - Change playback speed (0.5x - 2.0x)
   - Scale/resize video (custom dimensions)
   - Apply 10 different filters:
@@ -24,10 +65,15 @@ A complete Telegram bot system for video processing and unicalization with a ful
   - Trim/cut video length
   - Crop video to custom dimensions
 
-- **Video Merging (Mode 2):**
-  - Horizontal layout (side by side)
-  - Vertical layout (top to bottom)
-  - Sequential layout (one after another)
+- **Video Combining (Modes 2 & N):**
+  - **Strategies:**
+    - First-with-First pairing (1:1)
+    - All-with-All (cartesian product)
+    - Sequential concatenation
+  - **Layouts:**
+    - Horizontal layout (side by side)
+    - Vertical layout (top to bottom)
+    - Sequential layout (one after another)
 
 - **User Management:**
   - Automatic user registration

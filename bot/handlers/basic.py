@@ -167,7 +167,7 @@ async def show_referrals(message: Message):
 
 @router.message(F.text.in_(["🎬 Process 1 Video", "🎬 Обработать 1 видео"]))
 async def mode_1_handler(message: Message, state: FSMContext):
-    """Handle Mode 1: Single video processing"""
+    """Handle Mode 1: Single video processing - NEW FLOW"""
     from bot.states import VideoProcessingStates
     
     async with async_session_maker() as session:
@@ -177,14 +177,29 @@ async def mode_1_handler(message: Message, state: FSMContext):
             username=message.from_user.username
         )
     
-    await state.set_state(VideoProcessingStates.waiting_for_video_mode1)
-    mode1_text = get_text(user.language, "mode1_send_video", max_size=settings.MAX_VIDEO_SIZE_MB)
-    await message.answer(mode1_text, parse_mode="HTML")
+    await state.update_data(mode='mode1', modifications=[])
+    await state.set_state(VideoProcessingStates.selecting_modifications_mode1)
+    
+    mode1_text = get_text(user.language, "mode1_configure_filters")
+    if mode1_text == "mode1_configure_filters":  # Fallback if translation missing
+        mode1_text = (
+            "🎬 <b>Mode 1: Process Multiple Videos with Same Settings</b>\n\n"
+            "<b>Step 1:</b> Configure the modifications/filters you want to apply.\n"
+            "<b>Step 2:</b> Upload one or more videos.\n"
+            "All videos will be processed with the same settings!\n\n"
+            "Let's start by selecting the modifications:"
+        )
+    
+    await message.answer(
+        mode1_text,
+        parse_mode="HTML",
+        reply_markup=video_modifications_keyboard()
+    )
 
 
 @router.message(F.text.in_(["🎥 Process 2 Videos", "🎥 Обработать 2 видео"]))
 async def mode_2_handler(message: Message, state: FSMContext):
-    """Handle Mode 2: Two video processing"""
+    """Handle Mode 2: Two video groups processing - NEW FLOW"""
     from bot.states import VideoProcessingStates
     
     async with async_session_maker() as session:
@@ -194,6 +209,49 @@ async def mode_2_handler(message: Message, state: FSMContext):
             username=message.from_user.username
         )
     
-    await state.set_state(VideoProcessingStates.waiting_for_video1_mode2)
-    mode2_text = get_text(user.language, "mode2_send_video1", max_size=settings.MAX_VIDEO_SIZE_MB)
-    await message.answer(mode2_text, parse_mode="HTML")
+    await state.update_data(mode='mode2', modifications1=[], modifications2=[])
+    await state.set_state(VideoProcessingStates.selecting_modifications_video1)
+    
+    mode2_text = get_text(user.language, "mode2_configure_filters")
+    if mode2_text == "mode2_configure_filters":  # Fallback if translation missing
+        mode2_text = (
+            "🎥 <b>Mode 2: Process Two Video Groups and Merge</b>\n\n"
+            "<b>Step 1:</b> Configure modifications for Group 1 videos\n"
+            "<b>Step 2:</b> Upload one or more videos for Group 1\n"
+            "<b>Step 3:</b> Configure modifications for Group 2 videos\n"
+            "<b>Step 4:</b> Upload one or more videos for Group 2\n"
+            "<b>Step 5:</b> Choose how to combine them (first-with-first, all-with-all, sequential)\n"
+            "<b>Step 6:</b> Select layout (horizontal, vertical, sequential)\n\n"
+            "Let's start by configuring <b>Group 1</b> modifications:"
+        )
+    
+    await message.answer(
+        mode2_text,
+        parse_mode="HTML",
+        reply_markup=video_modifications_keyboard()
+    )
+
+
+@router.message(F.text == "🎞️ Process N Videos")
+async def mode_n_handler(message: Message, state: FSMContext):
+    """Handle Mode N: Multiple video groups processing - NEW"""
+    from bot.states import VideoProcessingStates
+    
+    async with async_session_maker() as session:
+        user = await get_or_create_user(
+            session,
+            telegram_id=message.from_user.id,
+            username=message.from_user.username
+        )
+    
+    await state.set_state(VideoProcessingStates.selecting_num_groups)
+    
+    await message.answer(
+        "🎞️ <b>Mode N: Process Multiple Video Groups</b>\n\n"
+        "This mode allows you to process 3, 4, or 5 video groups, "
+        "each with its own modifications/filters and multiple videos.\n\n"
+        "Then you can combine them using various strategies!\n\n"
+        "How many video groups do you want to create?",
+        parse_mode="HTML",
+        reply_markup=num_groups_keyboard()
+    )

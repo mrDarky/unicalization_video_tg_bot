@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     MAX_VIDEO_SIZE_MB: int = 100
     TEMP_VIDEO_DIR: str = "./temp_videos"
     PROCESSED_VIDEO_DIR: str = "./processed_videos"
+    MAX_CARTESIAN_COMBINATIONS: int = 100  # Limit for all-with-all strategy in Mode N
     
     class Config:
         env_file = ".env"
