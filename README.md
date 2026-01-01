@@ -39,6 +39,9 @@ Cross-platform GUI application with:
   - Balance management
   - Referral system
   - Transaction history
+  - **Multi-language support** (English 🇬🇧 and Russian 🇷🇺)
+  - Language selection at start
+  - Ability to change language anytime
 
 ### Admin Panel
 Modern Bootstrap 5-based admin interface with:
@@ -305,6 +308,9 @@ async def apply_custom_filter(input_path: str, output_path: str) -> bool:
 
 ### Adding New Bot Handlers
 Create handlers in `bot/handlers/` and register them in `bot_main.py`
+
+### Adding New Languages
+See [MULTILANG.md](MULTILANG.md) for detailed instructions on adding new languages to the bot.
 
 ### Adding New API Endpoints
 Create routes in `api/routes/` and include them in `api_main.py`
