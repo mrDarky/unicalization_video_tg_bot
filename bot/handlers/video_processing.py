@@ -271,7 +271,7 @@ async def handle_videos_mode1(message: Message, state: FSMContext):
         video_paths.append(video_path)
         video_ids.append(db_video.id)
         
-        video_count = len(video_paths)  # Get count after appending
+        video_count = len(video_paths)
         
         await state.update_data(
             video_paths=video_paths,

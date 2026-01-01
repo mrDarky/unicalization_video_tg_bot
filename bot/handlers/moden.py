@@ -313,7 +313,7 @@ async def handle_combine_strategy(callback: CallbackQuery, state: FSMContext):
     await state.set_state(VideoProcessingStates.selecting_merge_layout)
 
 
-@router.callback_query(VideoProcessingStates.selecting_combine_strategy, F.data.startswith("merge_"))
+@router.callback_query(VideoProcessingStates.selecting_merge_layout, F.data.startswith("merge_"))
 async def handle_merge_layout_moden(callback: CallbackQuery, state: FSMContext):
     """Handle merge layout selection and process videos for mode N"""
     layout = callback.data.replace("merge_", "")
