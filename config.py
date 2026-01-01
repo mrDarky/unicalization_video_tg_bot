@@ -1,5 +1,6 @@
 from pydantic_settings import BaseSettings
 from typing import List
+from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -9,6 +10,19 @@ class Settings(BaseSettings):
     
     # Database
     DATABASE_URL: str = "sqlite+aiosqlite:///./bot_database.db"
+    
+    @field_validator('DATABASE_URL')
+    @classmethod
+    def validate_database_url(cls, v: str) -> str:
+        """Validate that SQLite databases use async driver"""
+        if v.startswith('sqlite:') and not v.startswith('sqlite+aiosqlite:'):
+            raise ValueError(
+                f"Invalid DATABASE_URL: '{v}'. "
+                "SQLite databases must use the aiosqlite async driver. "
+                "Please use 'sqlite+aiosqlite:///' instead of 'sqlite:///'.\n"
+                "Example: DATABASE_URL=sqlite+aiosqlite:///./bot_database.db"
+            )
+        return v
     
     # FastAPI Admin Panel
     API_HOST: str = "0.0.0.0"
