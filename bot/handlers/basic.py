@@ -4,7 +4,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from bot.keyboards import main_menu_keyboard, mode_selection_keyboard, language_selection_keyboard
 from database.database import async_session_maker
-from database.crud import get_or_create_user, get_user_videos, get_statistics, update_user_language, get_user_by_telegram_id, get_user_with_referrals
+from database.crud import get_or_create_user, get_user_videos, get_statistics, update_user_language, get_user_by_telegram_id, get_user_with_referrals, get_user_referrals_count
 from config import settings
 from locales import get_text
 from bot.states import LanguageSelectionStates
@@ -140,19 +140,14 @@ async def show_balance(message: Message):
 async def show_referrals(message: Message):
     """Show referral information"""
     async with async_session_maker() as session:
-        user = await get_user_with_referrals(session, message.from_user.id)
-        if not user:
-            # Create user if doesn't exist
-            user = await get_or_create_user(
-                session,
-                telegram_id=message.from_user.id,
-                username=message.from_user.username
-            )
-            # Refresh to get empty referrals list
-            await session.refresh(user, ['referrals'])
+        user = await get_or_create_user(
+            session,
+            telegram_id=message.from_user.id,
+            username=message.from_user.username
+        )
         
-        # Access referrals within the session context
-        total_referrals = len(user.referrals)
+        # Get referrals count within the session context
+        total_referrals = await get_user_referrals_count(session, user.id)
         language = user.language
         telegram_id = user.telegram_id
     
