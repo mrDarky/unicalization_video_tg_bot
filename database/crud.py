@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, func
-from database.models import User, Video, Deposit, Withdrawal, Setting, Statistic
-from datetime import datetime
+from database.models import User, Video, Deposit, Withdrawal, Setting, Statistic, TariffPlan, DailyVideoUsage
+from datetime import datetime, date
 from typing import Optional, List
 
 
@@ -165,3 +165,134 @@ async def get_statistics(session: AsyncSession) -> dict:
         "total_videos": total_videos.scalar(),
         "processed_videos": processed_videos.scalar()
     }
+
+
+# Tariff Plan CRUD operations
+async def get_all_tariff_plans(session: AsyncSession, skip: int = 0, limit: int = 100) -> List[TariffPlan]:
+    """Get all tariff plans with pagination"""
+    result = await session.execute(select(TariffPlan).offset(skip).limit(limit))
+    return result.scalars().all()
+
+
+async def get_tariff_plan(session: AsyncSession, plan_id: int) -> Optional[TariffPlan]:
+    """Get tariff plan by ID"""
+    result = await session.execute(select(TariffPlan).where(TariffPlan.id == plan_id))
+    return result.scalar_one_or_none()
+
+
+async def create_tariff_plan(session: AsyncSession, name: str, description: str = None, 
+                            videos_per_day: int = 10, videos_per_order: int = 5, 
+                            price: float = 0.0) -> TariffPlan:
+    """Create new tariff plan"""
+    plan = TariffPlan(
+        name=name,
+        description=description,
+        videos_per_day=videos_per_day,
+        videos_per_order=videos_per_order,
+        price=price
+    )
+    session.add(plan)
+    await session.commit()
+    await session.refresh(plan)
+    return plan
+
+
+async def update_tariff_plan(session: AsyncSession, plan_id: int, **kwargs):
+    """Update tariff plan"""
+    await session.execute(
+        update(TariffPlan).where(TariffPlan.id == plan_id).values(**kwargs)
+    )
+    await session.commit()
+
+
+async def delete_tariff_plan(session: AsyncSession, plan_id: int):
+    """Delete tariff plan"""
+    await session.execute(
+        delete(TariffPlan).where(TariffPlan.id == plan_id)
+    )
+    await session.commit()
+
+
+async def assign_tariff_plan_to_user(session: AsyncSession, user_id: int, plan_id: int):
+    """Assign tariff plan to user"""
+    await session.execute(
+        update(User).where(User.id == user_id).values(tariff_plan_id=plan_id)
+    )
+    await session.commit()
+
+
+# Video usage tracking operations
+async def get_or_create_daily_usage(session: AsyncSession, user_id: int, check_date: date = None) -> DailyVideoUsage:
+    """Get or create daily video usage record for user"""
+    if check_date is None:
+        check_date = date.today()
+    
+    # Query for usage on the specific date
+    result = await session.execute(
+        select(DailyVideoUsage)
+        .where(DailyVideoUsage.user_id == user_id)
+        .where(func.date(DailyVideoUsage.date) == check_date)
+    )
+    usage = result.scalar_one_or_none()
+    
+    if not usage:
+        usage = DailyVideoUsage(
+            user_id=user_id,
+            date=datetime.combine(check_date, datetime.min.time()),
+            video_count=0
+        )
+        session.add(usage)
+        await session.commit()
+        await session.refresh(usage)
+    
+    return usage
+
+
+async def increment_daily_usage(session: AsyncSession, user_id: int, count: int = 1):
+    """Increment daily video usage count"""
+    usage = await get_or_create_daily_usage(session, user_id)
+    usage.video_count += count
+    await session.commit()
+
+
+async def get_user_daily_usage(session: AsyncSession, user_id: int) -> int:
+    """Get user's video count for today"""
+    usage = await get_or_create_daily_usage(session, user_id)
+    return usage.video_count
+
+
+async def check_user_can_process_videos(session: AsyncSession, user_id: int, video_count: int) -> tuple[bool, str]:
+    """
+    Check if user can process videos based on their tariff plan limits
+    Returns (can_process, error_message)
+    """
+    # Get user with tariff plan
+    result = await session.execute(
+        select(User).where(User.id == user_id)
+    )
+    user = result.scalar_one_or_none()
+    
+    if not user:
+        return False, "User not found"
+    
+    # If no tariff plan, use default limits from settings or deny
+    if not user.tariff_plan:
+        # No tariff plan means unlimited or we can set default
+        # For now, let's allow a default of 5 per day and 3 per order
+        daily_limit = 5
+        order_limit = 3
+    else:
+        daily_limit = user.tariff_plan.videos_per_day
+        order_limit = user.tariff_plan.videos_per_order
+    
+    # Check order limit
+    if video_count > order_limit:
+        return False, f"Order limit exceeded. Maximum {order_limit} videos per order."
+    
+    # Check daily limit
+    daily_usage = await get_user_daily_usage(session, user_id)
+    if daily_usage + video_count > daily_limit:
+        remaining = max(0, daily_limit - daily_usage)
+        return False, f"Daily limit exceeded. You have {remaining} videos remaining today (limit: {daily_limit})."
+    
+    return True, ""
