@@ -36,7 +36,7 @@ async def init_db():
         # This handles existing databases that were created before the language feature
         # Note: This migration is SQLite-specific. For other databases, the column
         # should be added using the appropriate migration tool (e.g., Alembic).
-        if settings.DATABASE_URL.startswith('sqlite'):
+        if settings.DATABASE_URL.startswith(('sqlite:', 'sqlite+')):
             try:
                 result = await conn.execute(text(
                     "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='language'"
@@ -47,7 +47,7 @@ async def init_db():
                     logger.info("Adding 'language' column to users table...")
                     # ALTER TABLE with DEFAULT in SQLite automatically populates existing rows
                     await conn.execute(text(
-                        "ALTER TABLE users ADD COLUMN language VARCHAR(10) DEFAULT 'en' NOT NULL"
+                        "ALTER TABLE users ADD COLUMN language VARCHAR DEFAULT 'en' NOT NULL"
                     ))
                     logger.info("✅ Language column added successfully!")
                 else:
