@@ -49,6 +49,77 @@ async def handle_speed_modification_video2(callback: CallbackQuery, state: FSMCo
     await callback.answer()
 
 
+@router.message(VideoProcessingStates.waiting_for_speed_input)
+async def process_speed_input_mode2(message: Message, state: FSMContext):
+    """Process speed input for Mode 2"""
+    try:
+        speed = float(message.text)
+        if speed < 0.5 or speed > 2.0:
+            await message.answer("❌ Speed must be between 0.5 and 2.0")
+            return
+        
+        data = await state.get_data()
+        modification_context = data.get('modification_context', 'video1')
+        
+        if modification_context == 'video1':
+            modifications1 = data.get('modifications1', [])
+            modifications1.append({'type': 'speed', 'value': speed})
+            await state.update_data(modifications1=modifications1)
+            
+            await message.answer(
+                f"✅ Speed set to {speed}x for Group 1\n\n"
+                "Select more modifications or click Done:",
+                reply_markup=video_modifications_keyboard()
+            )
+            await state.set_state(VideoProcessingStates.selecting_modifications_video1)
+        else:  # video2
+            modifications2 = data.get('modifications2', [])
+            modifications2.append({'type': 'speed', 'value': speed})
+            await state.update_data(modifications2=modifications2)
+            
+            await message.answer(
+                f"✅ Speed set to {speed}x for Group 2\n\n"
+                "Select more modifications or click Done:",
+                reply_markup=video_modifications_keyboard()
+            )
+            await state.set_state(VideoProcessingStates.selecting_modifications_video2)
+    except ValueError:
+        await message.answer("❌ Invalid input. Please enter a number.")
+
+
+@router.message(VideoProcessingStates.waiting_for_text_input)
+async def process_text_input_mode2(message: Message, state: FSMContext):
+    """Process text input for Mode 2"""
+    text = message.text
+    
+    data = await state.get_data()
+    modification_context = data.get('modification_context', 'video1')
+    
+    if modification_context == 'video1':
+        modifications1 = data.get('modifications1', [])
+        modifications1.append({'type': 'text', 'value': text, 'x': 10, 'y': 10})
+        await state.update_data(modifications1=modifications1)
+        
+        await message.answer(
+            f"✅ Text added: '{text}' for Group 1\n\n"
+            "Select more modifications or click Done:",
+            reply_markup=video_modifications_keyboard()
+        )
+        await state.set_state(VideoProcessingStates.selecting_modifications_video1)
+    else:  # video2
+        modifications2 = data.get('modifications2', [])
+        modifications2.append({'type': 'text', 'value': text, 'x': 10, 'y': 10})
+        await state.update_data(modifications2=modifications2)
+        
+        await message.answer(
+            f"✅ Text added: '{text}' for Group 2\n\n"
+            "Select more modifications or click Done:",
+            reply_markup=video_modifications_keyboard()
+        )
+        await state.set_state(VideoProcessingStates.selecting_modifications_video2)
+
+
+
 @router.callback_query(VideoProcessingStates.selecting_modifications_video1, F.data == "mod_filter")
 async def handle_filter_modification_video1(callback: CallbackQuery, state: FSMContext):
     """Handle filter modification for video group 1"""

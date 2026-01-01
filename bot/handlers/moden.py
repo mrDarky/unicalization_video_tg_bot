@@ -110,6 +110,51 @@ async def handle_text_modification_group(callback: CallbackQuery, state: FSMCont
     await callback.answer()
 
 
+@router.message(VideoProcessingStates.waiting_for_speed_input)
+async def process_speed_input_moden(message: Message, state: FSMContext):
+    """Process speed input for Mode N"""
+    try:
+        speed = float(message.text)
+        if speed < 0.5 or speed > 2.0:
+            await message.answer("❌ Speed must be between 0.5 and 2.0")
+            return
+        
+        data = await state.get_data()
+        current_group = data.get('current_group', 1)
+        modifications = data.get('modifications', [])
+        modifications.append({'type': 'speed', 'value': speed})
+        await state.update_data(modifications=modifications)
+        
+        await message.answer(
+            f"✅ Speed set to {speed}x for Group {current_group}\n\n"
+            "Select more modifications or click Done:",
+            reply_markup=video_modifications_keyboard()
+        )
+        await state.set_state(VideoProcessingStates.selecting_modifications_group)
+    except ValueError:
+        await message.answer("❌ Invalid input. Please enter a number.")
+
+
+@router.message(VideoProcessingStates.waiting_for_text_input)
+async def process_text_input_moden(message: Message, state: FSMContext):
+    """Process text input for Mode N"""
+    text = message.text
+    
+    data = await state.get_data()
+    current_group = data.get('current_group', 1)
+    modifications = data.get('modifications', [])
+    modifications.append({'type': 'text', 'value': text, 'x': 10, 'y': 10})
+    await state.update_data(modifications=modifications)
+    
+    await message.answer(
+        f"✅ Text added: '{text}' for Group {current_group}\n\n"
+        "Select more modifications or click Done:",
+        reply_markup=video_modifications_keyboard()
+    )
+    await state.set_state(VideoProcessingStates.selecting_modifications_group)
+
+
+
 @router.callback_query(VideoProcessingStates.selecting_modifications_group, F.data == "mod_done")
 async def finish_modifications_group(callback: CallbackQuery, state: FSMContext):
     """Finish setting up modifications for current group and proceed to video upload"""

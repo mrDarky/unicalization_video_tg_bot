@@ -27,11 +27,11 @@ async def main():
     await init_db()
     logger.info("Database initialized successfully")
     
-    # Register routers
+    # Register routers (order matters - more specific first)
     dp.include_router(basic.router)
-    dp.include_router(video_processing.router)
     dp.include_router(mode2.router)
     dp.include_router(moden.router)
+    dp.include_router(video_processing.router)
     
     # Start polling
     logger.info("Bot started successfully")
