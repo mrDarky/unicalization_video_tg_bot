@@ -34,31 +34,26 @@ async def init_db():
         
         # Migration: Add language column to users table if it doesn't exist
         # This handles existing databases that were created before the language feature
-        try:
-            result = await conn.execute(text(
-                "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='language'"
-            ))
-            column_exists = result.scalar() > 0
-            
-            if not column_exists:
-                logger.info("Adding 'language' column to users table...")
-                await conn.execute(text(
-                    "ALTER TABLE users ADD COLUMN language VARCHAR DEFAULT 'en' NOT NULL"
+        # Note: This migration is SQLite-specific. For other databases, the column
+        # should be added using the appropriate migration tool (e.g., Alembic).
+        if settings.DATABASE_URL.startswith('sqlite'):
+            try:
+                result = await conn.execute(text(
+                    "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='language'"
                 ))
-                logger.info("✅ Language column added successfully!")
+                column_exists = result.scalar() > 0
                 
-                # Update any NULL values to 'en' (for safety after migration)
-                # This only runs when the column is first added
-                async with async_session_maker() as session:
-                    await session.execute(text(
-                        "UPDATE users SET language = 'en' WHERE language IS NULL"
+                if not column_exists:
+                    logger.info("Adding 'language' column to users table...")
+                    # ALTER TABLE with DEFAULT in SQLite automatically populates existing rows
+                    await conn.execute(text(
+                        "ALTER TABLE users ADD COLUMN language VARCHAR(10) DEFAULT 'en' NOT NULL"
                     ))
-                    await session.commit()
-                    logger.debug("Set default language for existing users")
-            else:
-                logger.debug("Language column already exists in users table")
-        except Exception as e:
-            logger.warning(f"Could not check/add language column (may not be SQLite): {e}")
+                    logger.info("✅ Language column added successfully!")
+                else:
+                    logger.debug("Language column already exists in users table")
+            except Exception as e:
+                logger.warning(f"Could not check/add language column: {e}")
 
 
 async def get_session() -> AsyncSession:
