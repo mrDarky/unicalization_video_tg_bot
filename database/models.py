@@ -14,6 +14,7 @@ class User(Base):
     username = Column(String, nullable=True)
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
+    language = Column(String, default="en", nullable=False)  # Language preference: en, ru
     created_at = Column(DateTime, default=datetime.utcnow)
     is_active = Column(Boolean, default=True)
     referrer_id = Column(Integer, ForeignKey("users.id"), nullable=True)

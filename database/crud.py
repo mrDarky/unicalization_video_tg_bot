@@ -36,6 +36,14 @@ async def get_or_create_user(session: AsyncSession, telegram_id: int, username: 
     return user
 
 
+async def update_user_language(session: AsyncSession, telegram_id: int, language: str):
+    """Update user's language preference"""
+    await session.execute(
+        update(User).where(User.telegram_id == telegram_id).values(language=language)
+    )
+    await session.commit()
+
+
 async def create_video(session: AsyncSession, user_id: int, file_id: str, mode: int,
                        original_filename: str = None) -> Video:
     """Create video record"""
