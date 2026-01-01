@@ -36,6 +36,14 @@ async def get_or_create_user(session: AsyncSession, telegram_id: int, username: 
     return user
 
 
+async def get_user_referrals_count(session: AsyncSession, user_id: int) -> int:
+    """Get count of referrals for a user"""
+    result = await session.execute(
+        select(func.count(User.id)).where(User.referrer_id == user_id)
+    )
+    return result.scalar() or 0
+
+
 async def update_user_language(session: AsyncSession, telegram_id: int, language: str):
     """Update user's language preference"""
     await session.execute(
