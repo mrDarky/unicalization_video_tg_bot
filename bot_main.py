@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from config import settings
 from database.database import init_db
-from bot.handlers import basic, video_processing, mode2
+from bot.handlers import basic, video_processing, mode2, moden
 from bot.states import VideoProcessingStates
 
 # Configure logging
@@ -31,6 +31,7 @@ async def main():
     dp.include_router(basic.router)
     dp.include_router(video_processing.router)
     dp.include_router(mode2.router)
+    dp.include_router(moden.router)
     
     # Start polling
     logger.info("Bot started successfully")

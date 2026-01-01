@@ -6,7 +6,7 @@ from bot.keyboards import (
     video_modifications_keyboard,
     filter_selection_keyboard,
     main_menu_keyboard,
-    confirm_keyboard
+    done_adding_videos_keyboard
 )
 from database.database import async_session_maker
 from database.crud import get_or_create_user, create_video, update_video_status
@@ -18,57 +18,9 @@ import json
 router = Router()
 
 
-@router.message(VideoProcessingStates.waiting_for_video_mode1, F.video)
-async def handle_video_mode1(message: Message, state: FSMContext):
-    """Handle video upload for mode 1"""
-    video = message.video
-    
-    # Check file size
-    if video.file_size > settings.MAX_VIDEO_SIZE_MB * 1024 * 1024:
-        await message.answer(
-            f"❌ Video is too large! Max size: {settings.MAX_VIDEO_SIZE_MB}MB"
-        )
-        return
-    
-    # Download video
-    file = await message.bot.get_file(video.file_id)
-    filename = generate_filename()
-    video_path = os.path.join(settings.TEMP_VIDEO_DIR, filename)
-    
-    await message.bot.download_file(file.file_path, video_path)
-    
-    # Save video to database
-    async with async_session_maker() as session:
-        user = await get_or_create_user(
-            session,
-            telegram_id=message.from_user.id,
-            username=message.from_user.username
-        )
-        
-        db_video = await create_video(
-            session,
-            user_id=user.id,
-            file_id=video.file_id,
-            mode=1,
-            original_filename=filename
-        )
-        
-        await state.update_data(
-            video_id=db_video.id,
-            video_path=video_path,
-            modifications=[]
-        )
-    
-    await message.answer(
-        "✅ Video received!\n\n"
-        "Now select the modifications you want to apply:",
-        reply_markup=video_modifications_keyboard()
-    )
-    await state.set_state(VideoProcessingStates.selecting_modifications_mode1)
-
-
-@router.callback_query(F.data == "mod_speed")
-async def handle_speed_modification(callback: CallbackQuery, state: FSMContext):
+# Mode 1: NEW FLOW - Configure filters first, then add multiple videos
+@router.callback_query(VideoProcessingStates.selecting_modifications_mode1, F.data == "mod_speed")
+async def handle_speed_modification_mode1(callback: CallbackQuery, state: FSMContext):
     """Handle speed modification"""
     await callback.message.edit_text(
         "⚡ <b>Change Speed</b>\n\n"
@@ -94,18 +46,30 @@ async def process_speed_input(message: Message, state: FSMContext):
         modifications.append({'type': 'speed', 'value': speed})
         await state.update_data(modifications=modifications)
         
-        await message.answer(
-            f"✅ Speed set to {speed}x\n\n"
-            "Select more modifications or click Done:",
-            reply_markup=video_modifications_keyboard()
-        )
-        await state.set_state(VideoProcessingStates.selecting_modifications_mode1)
+        # Get current state name to determine which mode we're in
+        current_state = await state.get_state()
+        if 'mode1' in str(data.get('mode', 'mode1')):
+            await message.answer(
+                f"✅ Speed set to {speed}x\n\n"
+                "Select more modifications or click Done:",
+                reply_markup=video_modifications_keyboard()
+            )
+            await state.set_state(VideoProcessingStates.selecting_modifications_mode1)
+        else:
+            # For mode 2 or mode n
+            current_group = data.get('current_group', 1)
+            await message.answer(
+                f"✅ Speed set to {speed}x for Group {current_group}\n\n"
+                "Select more modifications or click Done:",
+                reply_markup=video_modifications_keyboard()
+            )
+            await state.set_state(VideoProcessingStates.selecting_modifications_group)
     except ValueError:
         await message.answer("❌ Invalid input. Please enter a number.")
 
 
-@router.callback_query(F.data == "mod_filter")
-async def handle_filter_modification(callback: CallbackQuery, state: FSMContext):
+@router.callback_query(VideoProcessingStates.selecting_modifications_mode1, F.data == "mod_filter")
+async def handle_filter_modification_mode1(callback: CallbackQuery, state: FSMContext):
     """Handle filter modification"""
     await callback.message.edit_text(
         "🎨 <b>Select Filter</b>\n\n"
@@ -116,8 +80,8 @@ async def handle_filter_modification(callback: CallbackQuery, state: FSMContext)
     await callback.answer()
 
 
-@router.callback_query(F.data.startswith("filter_"))
-async def apply_filter_selection(callback: CallbackQuery, state: FSMContext):
+@router.callback_query(VideoProcessingStates.selecting_modifications_mode1, F.data.startswith("filter_"))
+async def apply_filter_selection_mode1(callback: CallbackQuery, state: FSMContext):
     """Apply selected filter"""
     filter_name = callback.data.replace("filter_", "")
     
@@ -134,8 +98,8 @@ async def apply_filter_selection(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@router.callback_query(F.data == "mod_scale")
-async def handle_scale_modification(callback: CallbackQuery, state: FSMContext):
+@router.callback_query(VideoProcessingStates.selecting_modifications_mode1, F.data == "mod_scale")
+async def handle_scale_modification_mode1(callback: CallbackQuery, state: FSMContext):
     """Handle scale modification"""
     await callback.message.edit_text(
         "📐 <b>Scale Video</b>\n\n"
@@ -177,8 +141,8 @@ async def process_scale_input(message: Message, state: FSMContext):
         await message.answer("❌ Invalid input. Please enter valid numbers.")
 
 
-@router.callback_query(F.data == "mod_rotate")
-async def handle_rotate_modification(callback: CallbackQuery, state: FSMContext):
+@router.callback_query(VideoProcessingStates.selecting_modifications_mode1, F.data == "mod_rotate")
+async def handle_rotate_modification_mode1(callback: CallbackQuery, state: FSMContext):
     """Handle rotate modification"""
     await callback.message.edit_text(
         "🔄 <b>Rotate Video</b>\n\n"
@@ -217,8 +181,8 @@ async def process_rotate_input(message: Message, state: FSMContext):
         await message.answer("❌ Invalid input. Please enter a valid angle.")
 
 
-@router.callback_query(F.data == "mod_text")
-async def handle_text_modification(callback: CallbackQuery, state: FSMContext):
+@router.callback_query(VideoProcessingStates.selecting_modifications_mode1, F.data == "mod_text")
+async def handle_text_modification_mode1(callback: CallbackQuery, state: FSMContext):
     """Handle text modification"""
     await callback.message.edit_text(
         "📝 <b>Add Text</b>\n\n"
@@ -247,88 +211,186 @@ async def process_text_input(message: Message, state: FSMContext):
     await state.set_state(VideoProcessingStates.selecting_modifications_mode1)
 
 
-@router.callback_query(F.data == "mod_done")
-async def finish_modifications(callback: CallbackQuery, state: FSMContext):
-    """Finish modifications and process video"""
-    await callback.message.edit_text("⏳ Processing your video... Please wait.")
+@router.callback_query(VideoProcessingStates.selecting_modifications_mode1, F.data == "mod_done")
+async def finish_modifications_mode1(callback: CallbackQuery, state: FSMContext):
+    """Finish setting up modifications and proceed to video upload"""
+    data = await state.get_data()
+    modifications = data.get('modifications', [])
+    
+    mod_summary = "\n".join([f"• {mod['type'].title()}" for mod in modifications])
+    if not mod_summary:
+        mod_summary = "No modifications selected"
+    
+    await callback.message.edit_text(
+        f"✅ <b>Modifications configured!</b>\n\n"
+        f"{mod_summary}\n\n"
+        f"Now send me the video(s) you want to process.\n"
+        f"You can send multiple videos and they will all be processed with these settings.\n\n"
+        f"When done uploading videos, click the 'Done' button.",
+        parse_mode="HTML"
+    )
+    await callback.answer()
+    
+    await state.update_data(video_paths=[], video_ids=[])
+    await state.set_state(VideoProcessingStates.waiting_for_videos_mode1)
+    
+    # Send the done button
+    await callback.message.answer(
+        "Click 'Done' when you've uploaded all videos:",
+        reply_markup=done_adding_videos_keyboard()
+    )
+
+
+@router.message(VideoProcessingStates.waiting_for_videos_mode1, F.video)
+async def handle_videos_mode1(message: Message, state: FSMContext):
+    """Handle video uploads for mode 1"""
+    video = message.video
+    
+    # Check file size
+    if video.file_size > settings.MAX_VIDEO_SIZE_MB * 1024 * 1024:
+        await message.answer(
+            f"❌ Video is too large! Max size: {settings.MAX_VIDEO_SIZE_MB}MB"
+        )
+        return
+    
+    # Download video
+    file = await message.bot.get_file(video.file_id)
+    filename = generate_filename()
+    video_path = os.path.join(settings.TEMP_VIDEO_DIR, filename)
+    
+    await message.bot.download_file(file.file_path, video_path)
+    
+    # Save video to database
+    async with async_session_maker() as session:
+        user = await get_or_create_user(
+            session,
+            telegram_id=message.from_user.id,
+            username=message.from_user.username
+        )
+        
+        db_video = await create_video(
+            session,
+            user_id=user.id,
+            file_id=video.file_id,
+            mode=1,
+            original_filename=filename
+        )
+        
+        data = await state.get_data()
+        video_paths = data.get('video_paths', [])
+        video_ids = data.get('video_ids', [])
+        
+        video_paths.append(video_path)
+        video_ids.append(db_video.id)
+        
+        await state.update_data(
+            video_paths=video_paths,
+            video_ids=video_ids
+        )
+    
+    await message.answer(
+        f"✅ Video {len(video_paths)} received!\n\n"
+        "Send more videos or click 'Done' to start processing."
+    )
+
+
+@router.callback_query(VideoProcessingStates.waiting_for_videos_mode1, F.data == "videos_done")
+async def process_all_videos_mode1(callback: CallbackQuery, state: FSMContext):
+    """Process all uploaded videos with the configured modifications"""
+    await callback.message.edit_text("⏳ Processing your videos... Please wait.")
     await callback.answer()
     
     data = await state.get_data()
-    video_path = data.get('video_path')
+    video_paths = data.get('video_paths', [])
+    video_ids = data.get('video_ids', [])
     modifications = data.get('modifications', [])
-    video_id = data.get('video_id')
     
-    # Process video with modifications
-    current_path = video_path
-    
-    try:
-        for i, mod in enumerate(modifications):
-            output_path = os.path.join(settings.TEMP_VIDEO_DIR, f"temp_{i}_{generate_filename()}")
-            
-            if mod['type'] == 'speed':
-                await change_video_speed(current_path, output_path, mod['value'])
-            elif mod['type'] == 'filter':
-                await apply_filter(current_path, output_path, mod['value'])
-            elif mod['type'] == 'scale':
-                await scale_video(current_path, output_path, mod['width'], mod['height'])
-            elif mod['type'] == 'rotate':
-                await rotate_video(current_path, output_path, mod['angle'])
-            elif mod['type'] == 'text':
-                await add_text_to_video(current_path, output_path, mod['value'], mod['x'], mod['y'])
-            
-            # Clean up previous temp file
-            if current_path != video_path and os.path.exists(current_path):
-                os.remove(current_path)
-            
-            current_path = output_path
-        
-        # Save final video
-        final_filename = generate_filename()
-        final_path = os.path.join(settings.PROCESSED_VIDEO_DIR, final_filename)
-        
-        if current_path != video_path:
-            os.rename(current_path, final_path)
-        else:
-            import shutil
-            shutil.copy(video_path, final_path)
-        
-        # Update database
-        async with async_session_maker() as session:
-            await update_video_status(
-                session,
-                video_id,
-                "completed",
-                processed_filename=final_filename,
-                modifications=json.dumps(modifications)
-            )
-        
-        # Send processed video
-        with open(final_path, 'rb') as video_file:
-            await callback.message.answer_video(
-                video=video_file,
-                caption="✅ Your unicalized video is ready!"
-            )
-        
-        # Clean up
-        if os.path.exists(video_path):
-            os.remove(video_path)
-        
+    if not video_paths:
         await callback.message.answer(
-            "🎉 Processing complete!\n\n"
-            "Use the menu to process another video.",
+            "❌ No videos were uploaded. Please try again.",
             reply_markup=main_menu_keyboard()
         )
-        
-    except Exception as e:
-        await callback.message.answer(
-            f"❌ Error processing video: {str(e)}\n\n"
-            "Please try again.",
-            reply_markup=main_menu_keyboard()
-        )
-        
-        # Update database
-        async with async_session_maker() as session:
-            await update_video_status(session, video_id, "failed")
+        await state.clear()
+        return
+    
+    processed_count = 0
+    failed_count = 0
+    
+    for idx, (video_path, video_id) in enumerate(zip(video_paths, video_ids)):
+        try:
+            # Process video with modifications
+            current_path = video_path
+            
+            for i, mod in enumerate(modifications):
+                output_path = os.path.join(settings.TEMP_VIDEO_DIR, f"temp_{idx}_{i}_{generate_filename()}")
+                
+                if mod['type'] == 'speed':
+                    await change_video_speed(current_path, output_path, mod['value'])
+                elif mod['type'] == 'filter':
+                    await apply_filter(current_path, output_path, mod['value'])
+                elif mod['type'] == 'scale':
+                    await scale_video(current_path, output_path, mod['width'], mod['height'])
+                elif mod['type'] == 'rotate':
+                    await rotate_video(current_path, output_path, mod['angle'])
+                elif mod['type'] == 'text':
+                    await add_text_to_video(current_path, output_path, mod['value'], mod['x'], mod['y'])
+                
+                # Clean up previous temp file
+                if current_path != video_path and os.path.exists(current_path):
+                    os.remove(current_path)
+                
+                current_path = output_path
+            
+            # Save final video
+            final_filename = generate_filename()
+            final_path = os.path.join(settings.PROCESSED_VIDEO_DIR, final_filename)
+            
+            if current_path != video_path:
+                os.rename(current_path, final_path)
+            else:
+                import shutil
+                shutil.copy(video_path, final_path)
+            
+            # Update database
+            async with async_session_maker() as session:
+                await update_video_status(
+                    session,
+                    video_id,
+                    "completed",
+                    processed_filename=final_filename,
+                    modifications=json.dumps(modifications)
+                )
+            
+            # Send processed video
+            with open(final_path, 'rb') as video_file:
+                await callback.message.answer_video(
+                    video=video_file,
+                    caption=f"✅ Video {idx + 1}/{len(video_paths)} is ready!"
+                )
+            
+            # Clean up
+            if os.path.exists(video_path):
+                os.remove(video_path)
+            
+            processed_count += 1
+            
+        except Exception as e:
+            failed_count += 1
+            await callback.message.answer(
+                f"❌ Error processing video {idx + 1}: {str(e)}"
+            )
+            
+            # Update database
+            async with async_session_maker() as session:
+                await update_video_status(session, video_id, "failed")
+    
+    await callback.message.answer(
+        f"🎉 Processing complete!\n\n"
+        f"✅ Successful: {processed_count}\n"
+        f"❌ Failed: {failed_count}\n\n"
+        "Use the menu to process more videos.",
+        reply_markup=main_menu_keyboard()
+    )
     
     await state.clear()
 
@@ -343,7 +405,7 @@ async def cancel_processing(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-@router.callback_query(F.data == "back_to_mods")
+@router.callback_query(VideoProcessingStates.selecting_modifications_mode1, F.data == "back_to_mods")
 async def back_to_modifications(callback: CallbackQuery, state: FSMContext):
     """Go back to modifications menu"""
     await callback.message.edit_text(
