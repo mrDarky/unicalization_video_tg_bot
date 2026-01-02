@@ -59,6 +59,30 @@ async def init_db():
                     "If using a non-SQLite database, please use Alembic or another "
                     "migration tool to add the 'language' column to the 'users' table."
                 )
+            
+            # Migration: Add tariff_plan_id column to users table if it doesn't exist
+            # This handles existing databases that were created before the tariff plan feature
+            try:
+                result = await conn.execute(text(
+                    "SELECT COUNT(*) FROM pragma_table_info('users') WHERE name='tariff_plan_id'"
+                ))
+                column_exists = result.scalar() > 0
+                
+                if not column_exists:
+                    logger.info("Adding 'tariff_plan_id' column to users table...")
+                    # Add nullable foreign key column
+                    await conn.execute(text(
+                        "ALTER TABLE users ADD COLUMN tariff_plan_id INTEGER"
+                    ))
+                    logger.info("✅ tariff_plan_id column added successfully!")
+                else:
+                    logger.debug("tariff_plan_id column already exists in users table")
+            except Exception as e:
+                logger.error(
+                    f"Failed to check/add tariff_plan_id column: {e}. "
+                    "If using a non-SQLite database, please use Alembic or another "
+                    "migration tool to add the 'tariff_plan_id' column to the 'users' table."
+                )
 
 
 async def get_session() -> AsyncSession:
