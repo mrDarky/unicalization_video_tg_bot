@@ -311,7 +311,6 @@ async def process_all_videos_mode1(callback: CallbackQuery, state: FSMContext):
     
     # Check video limits
     async with async_session_maker() as session:
-        from database.crud import check_user_can_process_videos, get_or_create_user
         user = await get_or_create_user(
             session,
             telegram_id=callback.from_user.id,
@@ -407,7 +406,6 @@ async def process_all_videos_mode1(callback: CallbackQuery, state: FSMContext):
     # Increment daily usage for successfully processed videos
     if processed_count > 0:
         async with async_session_maker() as session:
-            from database.crud import increment_daily_usage, get_or_create_user
             user = await get_or_create_user(
                 session,
                 telegram_id=callback.from_user.id,

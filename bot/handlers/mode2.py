@@ -11,7 +11,13 @@ from bot.keyboards import (
     done_adding_videos_keyboard
 )
 from database.database import async_session_maker
-from database.crud import get_or_create_user, create_video, update_video_status
+from database.crud import (
+    get_or_create_user, 
+    create_video, 
+    update_video_status,
+    check_user_can_process_videos,
+    increment_daily_usage
+)
 from utils.video_processing import *
 from config import settings
 import os
@@ -464,7 +470,6 @@ async def handle_merge_layout_mode2(callback: CallbackQuery, state: FSMContext):
     
     # Check video limits
     async with async_session_maker() as session:
-        from database.crud import check_user_can_process_videos, get_or_create_user
         user = await get_or_create_user(
             session,
             telegram_id=callback.from_user.id,
@@ -629,7 +634,6 @@ async def handle_merge_layout_mode2(callback: CallbackQuery, state: FSMContext):
         
         # Increment daily usage for successfully processed videos
         async with async_session_maker() as session:
-            from database.crud import increment_daily_usage, get_or_create_user
             user = await get_or_create_user(
                 session,
                 telegram_id=callback.from_user.id,
