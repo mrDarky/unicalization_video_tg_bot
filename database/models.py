@@ -19,11 +19,14 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     referrer_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     balance = Column(Float, default=0.0)
+    tariff_plan_id = Column(Integer, ForeignKey("tariff_plans.id"), nullable=True)
     
     videos = relationship("Video", back_populates="user")
     deposits = relationship("Deposit", back_populates="user")
     withdrawals = relationship("Withdrawal", back_populates="user")
     referrals = relationship("User", backref="referrer", remote_side=[id])
+    tariff_plan = relationship("TariffPlan", back_populates="users")
+    daily_usages = relationship("DailyVideoUsage", back_populates="user")
 
 
 class Video(Base):
@@ -98,3 +101,30 @@ class Statistic(Base):
     total_withdrawals = Column(Float, default=0.0)
     new_users = Column(Integer, default=0)
     new_videos = Column(Integer, default=0)
+
+
+class TariffPlan(Base):
+    __tablename__ = "tariff_plans"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False, index=True)
+    description = Column(Text, nullable=True)
+    videos_per_day = Column(Integer, nullable=False, default=10)  # Daily limit
+    videos_per_order = Column(Integer, nullable=False, default=5)  # Per order/batch limit
+    price = Column(Float, nullable=True, default=0.0)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    users = relationship("User", back_populates="tariff_plan")
+
+
+class DailyVideoUsage(Base):
+    __tablename__ = "daily_video_usage"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    date = Column(DateTime, default=datetime.utcnow, index=True)
+    video_count = Column(Integer, default=0)
+    
+    user = relationship("User", back_populates="daily_usages")
